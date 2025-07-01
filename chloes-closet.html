@@ -1,1 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chloe's Closet - Dress Up Game</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    body {
+      background-color: #ffeef2;
+      font-family: 'Press Start 2P', cursive;
+      margin-top: 40px;
+      display: flex;
+      justify-content: center;
+      image-rendering: pixelated;
+    }
 
+    .main-layout {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .character-preview {
+      width: 300px;
+      background-color: #fff0f6;
+      border: 4px solid #ff66cc;
+      box-shadow: 8px 8px 0 #ff99cc;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px;
+    }
+
+    .character-box {
+      position: relative;
+      width: 200px;
+      height: 300px;
+    }
+
+    .character-box img {
+      position: absolute;
+      width: 200px;
+      top: 0;
+      left: 0;
+      image-rendering: pixelated;
+    }
+
+    .browser-frame {
+      width: 600px;
+      background-color: #fffafc;
+      border: 4px solid #ffaacc;
+      box-shadow: 8px 8px 0 #ff99cc;
+    }
+
+    .browser-topbar {
+      background-color: #ffd6ea;
+      padding: 8px;
+      display: flex;
+      align-items: center;
+    }
+
+    .dot {
+      height: 12px;
+      width: 12px;
+      margin-right: 5px;
+    }
+
+    .red { background-color: #ff6b6b; }
+    .yellow { background-color: #fcd34d; }
+    .green { background-color: #6ee7b7; }
+
+    .browser-title {
+      margin-left: 10px;
+      color: #a33366;
+      font-size: 10px;
+    }
+
+    .tab-bar {
+      background-color: #ffe0f0;
+      padding: 6px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      border-bottom: 2px solid #ff99cc;
+    }
+
+    .tab {
+      background-color: #ffe0f0;
+      border: 2px solid #ff99cc;
+      padding: 6px 12px;
+      cursor: pointer;
+      font-size: 10px;
+      color: #a33366;
+      box-shadow: 2px 2px 0 #ff99cc;
+      transition: all 0.2s ease-in-out;
+    }
+
+    .tab:hover {
+      background-color: #fff0f8;
+      transform: scale(1.05);
+    }
+
+    .tab.active {
+      background-color: #fff0f6;
+      font-weight: bold;
+    }
+
+    .tab-content {
+      display: none;
+      padding: 20px;
+      font-size: 10px;
+      color: #444;
+    }
+
+    .tab-content.open {
+      display: block;
+      animation: fadeDown 0.4s ease-out;
+    }
+
+    @keyframes fadeDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .option-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .option-button {
+      background-color: #ffe0f0;
+      border: 2px solid #ff99cc;
+      padding: 8px;
+      cursor: pointer;
+      font-size: 9px;
+      color: #a33366;
+      box-shadow: 2px 2px 0 #ff99cc;
+      transition: transform 0.2s ease-in-out;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .option-button:hover {
+      background-color: #fff0f8;
+      transform: scale(1.1);
+    }
+
+    .option-button img {
+      image-rendering: pixelated;
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+      margin-bottom: 4px;
+    }
+
+    .control-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 10px;
+      width: 100%;
+      justify-content: center;
+    }
+
+    .control-buttons button {
+      font-size: 10px;
+      padding: 6px 12px;
+      background-color: #ffd6ea;
+      border: 2px solid #ff99cc;
+      cursor: pointer;
+      font-family: 'Press Start 2P';
+      color: #a33366;
+      transition: all 0.2s ease-in-out;
+    }
+
+    .control-buttons button:hover {
+      background-color: #fff0f8;
+      transform: scale(1.05);
+    }
+
+    .undo-redo {
+      display: flex;
+      gap: 5px;
+      width: 100%;
+      justify-content: center;
+    }
+
+    .undo-redo button {
+      flex: 1;
+    }
+
+    .sticker {
+      position: absolute;
+      font-size: 24px;
+      cursor: move;
+      user-select: none;
+      z-index: 10;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media (max-width: 700px) {
+      .main-layout {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .browser-frame, .character-preview {
+        width: 90%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="main-layout">
+    <div class="character-preview">
+      <h2 style="color: #a33366; font-size: 10px; margin-bottom: 10px;">Character Preview</h2>
+      <div class="character-box" id="capture-area">
+        <!-- Character layers in proper stacking order -->
+        <img id="body_back" src="" alt="Body Back" />
+        <img id="hair_back" src="" alt="Hair Back" />
+        <img id="accessory_back" src="" alt="Accessory Back" />
+        <img id="accessory_middle_back" src="" alt="Accessory Middle Back" />
+        <img id="body_front" src="" alt="Body Front" />
+        <img id="body_front_color" src="" alt="Body Front Color" />
+        <img id="head" src="" alt="Head" />
+        <img id="face_back" src="" alt="Face Back" />
+        <img id="eye" src="" alt="Eyes" />
+        <img id="eye_color" src="" alt="Eye Color" />
+        <img id="face_front" src="" alt="Face Front" />
+        <img id="hair_front" src="" alt="Hair Front" />
+        <img id="hair_back_accessory" src="" alt="Hair Back Accessory" />
+        <img id="accessory_middle_front" src="" alt="Accessory Middle Front" />
+        <img id="accessory_front" src="" alt="Accessory Front" />
+        
+        <!-- Stickers container -->
+        <div id="stickers-container"></div>
+      </div>
+      
+      <div class="control-buttons">
+        <button onclick="randomizeCharacter()">🎲 Randomize</button>
+        <button onclick="resetCharacter()">🧼 Reset</button>
+        <button onclick="saveImage()">📸 Save Look</button>
+      </div>
+      
+      <div class="undo-redo">
+        <button onclick="undo()" id="undoBtn">↶ Undo</button>
+        <button onclick="redo()" id="redoBtn">↷ Redo</button>
+      </div>
+    </div>
+
+    <div class="browser-frame">
+      <div class="browser-topbar">
+        <span class="dot red"></span>
+        <span class="dot yellow"></span>
+        <span class="dot green"></span>
+        <span class="browser-title">Chloe's Closet</span>
+      </div>
+
+      <div class="tab-bar">
+        <button class="tab active" onclick="showTab('body')">Body</button>
+        <button class="tab" onclick="showTab('hair')">Hair</button>
+        <button class="tab" onclick="showTab('face')">Face</button>
+        <button class="tab" onclick="showTab('eyes')">Eyes</button>
+        <button class="tab" onclick="showTab('accessories')">Accessories</button>
+        <button class="tab" onclick="showTab('stickers')">Stickers</button>
+        <button class="tab" onclick="showTab('bundles')">Bundles</button>
+      </div>
+
+      <div id="tab-content-container">
+        <!-- Tab content will be dynamically generated here -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Asset configuration based on your uploaded files
+    const assetConfig = {
+      body_back: [
+        '¢▐Åùæòæ⌐1', '¢▐Åùæòæ⌐2', 'Ääò₧(âVâââc)1', 'Ääò₧(âVâââc)2',
+        'Ääò₧(âZü[â^ü[)1', 'Ääò₧(âZü[â^ü[)2', 'Ääò₧(âuâëâEâX)1', 'Ääò₧(âuâëâEâX)2',
+        'âGâvâìâôâhâîâX1', 'âGâvâìâôâhâîâX2', 'âRâïâZâbâg1', 'âRâïâZâbâg2',
+        'âSâXâìâè(â~âj)1', 'âSâXâìâè(â~âj)2', 'âTâ}ü[âhâîâX1', 'âTâ}ü[âhâîâX2',
+        'âXâNü[âïÉàÆà(öÆ)1', 'âXâNü[âïÉàÆà(öÆ)2', 'âXâNü[âïÉàÆà1', 'âXâNü[âïÉàÆà2',
+        'âZü[âëü[ò₧1', 'âZü[âëü[ò₧2', 'âuâîâUü[1', 'âuâîâUü[2',
+        'æfæ╠1', 'æfæ╠2', 'æ╠æÇÆà1', 'æ╠æÇÆà2'
+      ],
+      body_front: [
+        '¢▐Åùæòæ⌐1', '¢▐Åùæòæ⌐2', 'Ääò₧(âVâââc)1', 'Ääò₧(âVâââc)2',
+        'Ääò₧(âZü[â^ü[)1', 'Ääò₧(âZü[â^ü[)2', 'Ääò₧(âuâëâEâX)1', 'Ääò₧(âuâëâEâX)2',
+        'âGâvâìâôâhâîâX1', 'âGâvâìâôâhâîâX2', 'âRâïâZâbâg1', 'âRâïâZâbâg2',
+        'âSâXâìâè(â~âj)1', 'âSâXâìâè(â~âj)2', 'âZü[âëü[ò₧1', 'âZü[âëü[ò₧2',
+        'âuâîâUü[1', 'âuâîâUü[2', 'æ╠æÇÆà1', 'æ╠æÇÆà2'
+      ],
+      hair_back: [
+        'ÄOé┬ò╥é▌', 'âEâFü[âuâZâ~âìâôâO', 'âEâFü[âuâìâôâO', 'âMâUâMâUâVâçü[âg',
+        'âMâUâMâUâZâ~âìâôâO', 'âMâUâMâUâìâôâO', 'âTâCâhâeü[âïì╢(ÆZ)', 'âVâçü[âg',
+        'âZâ~âìâôâO', 'âcâCâôâeü[âï(ÆZ)', 'âcâCâôâeü[âï(Æ╖)', 'âcâCâôâhâèâï',
+        'â{âuâJâbâg', 'âìâôâO', 'ô±é┬îïé╤'
+      ],
+      hair_front: [
+        'Æåò¬é»1', 'Æåò¬é»2', 'âCâôâeü[âN', 'âEâFü[âu', 'âiâ`âàâëâï',
+        'âÅâCâïâh', 'é¡é╣û╤', 'é¿Å∞ùl', 'é╧é┴é┬é±', 'ëíò¬é»'
+      ],
+      hair_back_accessory: [
+        'ÄOé┬ò╥é▌', 'âTâCâhâeü[âïì╢(ÆZ)', 'âcâCâôâeü[âï(ÆZ)', 'âcâCâôâeü[âï(Æ╖)', 'âcâCâôâhâèâï'
+      ],
+      head: [
+        'É┬é┤é▀é╜èτ1', 'É┬é┤é▀é╜èτ2', 'òüÆ╩é╚èτ1', 'òüÆ╩é╚èτ2'
+      ],
+      face_back: [
+        'ÄOèpî√(æf)', 'ÄOèpî√(ìóéΦ)', 'ÄOèpî√(ô{éΦ)', 'Å╞éΩ(î√èJé½)', 'Å╞éΩ(î√ò┬é╢)',
+        'Å╬éó(î√èJé½)', 'Å╬éó(î√ò┬é╢)', 'æf', 'ìóéΦ(î√èJé½)', 'ìóéΦ(î√ò┬é╢)',
+        'ï┴é½', 'ô{éΦ(î√èJé½)', 'ô{éΦ(î√ò┬é╢)', 'öLî√(î√èJé½)', 'öLî√(î√ò┬é╢)'
+      ],
+      face_front: [
+        'ÄOèpî√(æf)', 'ÄOèpî√(ìóéΦ)', 'ÄOèpî√(ô{éΦ)', 'Å╞éΩ(î√èJé½)', 'Å╞éΩ(î√ò┬é╢)',
+        'Å╬éó(î√èJé½)', 'Å╬éó(î√ò┬é╢)', 'æf', 'ìóéΦ(î√èJé½)', 'ìóéΦ(î√ò┬é╢)',
+        'ï┴é½', 'ô{éΦ(î√èJé½)', 'ô{éΦ(î√ò┬é╢)', 'öLî√(î√èJé½)', 'öLî√(î√ò┬é╢)'
+      ],
+      eye: [
+        'ÄOèpû┌(ìòé▀)1', 'ÄOèpû┌(ìòé▀)2', 'ÄOèpû┌(ìòé▀)3', 'ÄOèpû┌1', 'ÄOèpû┌2', 'ÄOèpû┌3',
+        'Æ▐éΦû┌(ìòé▀)1', 'Æ▐éΦû┌(ìòé▀)2', 'Æ▐éΦû┌(ìòé▀)3', 'Æ▐éΦû┌1', 'Æ▐éΦû┌2', 'Æ▐éΦû┌3',
+        'ÉééΩû┌(ìòé▀)1', 'ÉééΩû┌(ìòé▀)2', 'ÉééΩû┌(ìòé▀)3', 'ÉééΩû┌1', 'ÉééΩû┌2', 'ÉééΩû┌3',
+        'âfâtâHâïâüû┌1', 'âfâtâHâïâüû┌2', 'âÅâïû┌(ìòé▀)1', 'âÅâïû┌(ìòé▀)2', 'âÅâïû┌(ìòé▀)3',
+        'âÅâïû┌1', 'âÅâïû┌2', 'âÅâïû┌3', 'è█Æ▐éΦû┌(ìòé▀)1', 'è█Æ▐éΦû┌(ìòé▀)2', 'è█Æ▐éΦû┌(ìòé▀)3',
+        'è█Æ▐éΦû┌1', 'è█Æ▐éΦû┌2', 'è█Æ▐éΦû┌3', 'é╛éΘû┌(ìòé▀)1', 'é╛éΘû┌(ìòé▀)2', 'é╛éΘû┌(ìòé▀)3',
+        'é╛éΘû┌1', 'é╛éΘû┌2', 'é╛éΘû┌3', 'òüÆ╩é╚û┌(ìòé▀)1', 'òüÆ╩é╚û┌(ìòé▀)2', 'òüÆ╩é╚û┌(ìòé▀)3',
+        'òüÆ╩é╚û┌1', 'òüÆ╩é╚û┌2', 'òüÆ╩é╚û┌3', 'ò┬é╢û┌1', 'ò┬é╢û┌2', 'ò┬é╢û┌3', 'û_û┌'
+      ],
+      eye_color: [
+        'ÄOèpû┌(ìòé▀)1', 'ÄOèpû┌(ìòé▀)2', 'ÄOèpû┌(ìòé▀)3', 'ÄOèpû┌1', 'ÄOèpû┌2', 'ÄOèpû┌3',
+        'Æ▐éΦû┌(ìòé▀)1', 'Æ▐éΦû┌(ìòé▀)2', 'Æ▐éΦû┌(ìòé▀)3', 'Æ▐éΦû┌1', 'Æ▐éΦû┌2', 'Æ▐éΦû┌3',
+        'ÉééΩû┌(ìòé▀)1', 'ÉééΩû┌(ìòé▀)2', 'ÉééΩû┌(ìòé▀)3', 'ÉééΩû┌1', 'ÉééΩû┌2', 'ÉééΩû┌3',
+        'âÅâïû┌(ìòé▀)1', 'âÅâïû┌(ìòé▀)2', 'âÅâïû┌(ìòé▀)3', 'âÅâïû┌1', 'âÅâïû┌2', 'âÅâïû┌3',
+        'è█Æ▐éΦû┌(ìòé▀)1', 'è█Æ▐éΦû┌(ìòé▀)2', 'è█Æ▐éΦû┌(ìòé▀)3', 'è█Æ▐éΦû┌1', 'è█Æ▐éΦû┌2', 'è█Æ▐éΦû┌3',
+        'é╛éΘû┌(ìòé▀)1', 'é╛éΘû┌(ìòé▀)2', 'é╛éΘû┌(ìòé▀)3', 'é╛éΘû┌1', 'é╛éΘû┌2', 'é╛éΘû┌3',
+        'òüÆ╩é╚û┌(ìòé▀)1', 'òüÆ╩é╚û┌(ìòé▀)2', 'òüÆ╩é╚û┌(ìòé▀)3', 'òüÆ╩é╚û┌1', 'òüÆ╩é╚û┌2', 'òüÆ╩é╚û┌3'
+      ],
+      accessory_back: [
+        'ÉGèo(ö»)', 'âAâzû╤æ╛é▀(ö»)', 'âAâzû╤ì╫é▀(ö»)', 'âGâïâtÄ¿(öº)', 'âwâAâoâôâgâèâ{âô',
+        'âwâbâhâhâîâXâèâ{âô(ò₧)', 'âzâÅâCâgâuâèâÇ', 'âüâKâl(ìòëÅ)', 'âüâKâl',
+        'éαé▌éáé░ÆZé▀(ö»)', 'éαé▌éáé░é┐éσéóÆ╖(ö»)', 'éαé▌éáé░ò¥ìL(ö»)', 'éαé▌éáé░ò╥é▌(ö»)',
+        'ê½ûéé╠èp', 'ê½ûéé╠ëH', 'ôVÄgé╠ëH', 'ôVÄgé╠ù╓', 'öLÄ¿(ö»)'
+      ],
+      accessory_front: [
+        'ÉGèo(ö»)', 'âAâzû╤æ╛é▀(ö»)', 'âAâzû╤ì╫é▀(ö»)', 'âwâAâoâôâgâèâ{âô',
+        'âwâbâhâhâîâXâèâ{âô(ò₧)', 'âzâÅâCâgâuâèâÇ', 'âüâKâl(ìòëÅ)', 'âüâKâl', 'ôVÄgé╠ù╓'
+      ],
+      accessory_middle_back: [
+        'âGâïâtÄ¿(öº)', 'éαé▌éáé░ÆZé▀(ö»)', 'éαé▌éáé░é┐éσéóÆ╖(ö»)', 'éαé▌éáé░ò¥ìL(ö»)',
+        'éαé▌éáé░ò╥é▌(ö»)', 'ê½ûéé╠èp', 'öLÄ¿(ö»)'
+      ],
+      accessory_middle_front: [
+        'âGâïâtÄ¿(öº)', 'éαé▌éáé░ÆZé▀(ö»)', 'éαé▌éáé░é┐éσéóÆ╖(ö»)', 'éαé▌éáé░ò¥ìL(ö»)',
+        'éαé▌éáé░ò╥é▌(ö»)', 'ê½ûéé╠èp'
+      ]
+    };
+
+    const bundles = {
+      cute: {
+        body_back: 'Ääò₧(âVâââc)1',
+        body_front: 'Ääò₧(âVâââc)1',
+        hair_back: 'âcâCâôâeü[âï(Æ╖)',
+        hair_front: 'âEâFü[âu',
+        hair_back_accessory: 'âcâCâôâeü[âï(Æ╖)',
+        head: 'É┬é┤é▀é╜èτ1',
+        face_back: 'ÄOèpî√(æf)',
+        face_front: 'ÄOèpî√(æf)',
+        eye: 'ÄOèpû┌1',
+        eye_color: 'ÄOèpû┌1',
+        accessory_back: 'âüâKâl',
+        accessory_front: 'âüâKâl',
+        accessory_middle_back: 'âGâïâtÄ¿(öº)',
+        accessory_middle_front: 'âGâïâtÄ¿(öº)'
+      },
+      elegant: {
+        body_back: 'âGâvâìâôâhâîâX1',
+        body_front: 'âGâvâìâôâhâîâX1',
+        hair_back: 'âìâôâO',
+        hair_front: 'é¿Å∞ùl',
+        hair_back_accessory: '',
+        head: 'òüÆ╩é╚èτ1',
+        face_back: 'Å╞éΩ(î√èJé½)',
+        face_front: 'Å╞éΩ(î√èJé½)',
+        eye: 'Æ▐éΦû┌1',
+        eye_color: 'Æ▐éΦû┌1',
+        accessory_back: 'éαé▌éáé░ÆZé▀(ö»)',
+        accessory_front: '',
+        accessory_middle_back: 'éαé▌éáé░ÆZé▀(ö»)',
+        accessory_middle_front: 'éαé▌éáé░ÆZé▀(ö»)'
+      },
+      casual: {
+        body_back: 'âSâXâìâè(â~âj)1',
+        body_front: 'âSâXâìâè(â~âj)1',
+        hair_back: 'âVâçü[âg',
+        hair_front: 'âCâôâeü[âN',
+        hair_back_accessory: '',
+        head: 'É┬é┤é▀é╜èτ2',
+        face_back: 'æf',
+        face_front: 'æf',
+        eye: 'ÉééΩû┌1',
+        eye_color: 'ÉééΩû┌1',
+        accessory_back: '',
+        accessory_front: '',
+        accessory_middle_back: '',
+        accessory_middle_front: ''
+      }
+    };
+
+    const stickerTypes = ['heart', 'star', 'flower', 'skull', 'lightning', 'rainbow'];
+    const stickerEmojis = {
+      heart: '💖',
+      star: '⭐',
+      flower: '🌸',
+      skull: '💀',
+      lightning: '⚡',
+      rainbow: '🌈'
+    };
+
+    // Game state management
+    let gameState = {
+      body_back: '',
+      body_front: '',
+      body_front_color: '',
+      hair_back: '',
+      hair_front: '',
+      hair_back_accessory: '',
+      head: '',
+      face_back: '',
+      face_front: '',
+      eye: '',
+      eye_color: '',
+      accessory_back: '',
+      accessory_front: '',
+      accessory_middle_back: '',
+      accessory_middle_front: '',
+      stickers: []
+    };
+
+    let history = [];
+    let historyIndex = -1;
+    let stickerCounter = 0;
+
+    // Initialize
+    function init() {
+      saveState();
+      showTab('body');
+      updateUndoRedoButtons();
+    }
+
+    // Helper functions
+    function getAssetPath(category, assetName) {
+      if (!assetName) return '';
+      return `default/${category}/${assetName}.png`;
+    }
+
+    function saveState() {
+      // Remove future states if we're not at the end
+      if (historyIndex < history.length - 1) {
+        history = history.slice(0, historyIndex + 1);
+      }
+      
+      history.push(JSON.parse(JSON.stringify(gameState)));
+      
+      // Limit history size
+      if (history.length > 50) {
+        history.shift();
+      } else {
+        historyIndex++;
+      }
+      
+      updateUndoRedoButtons();
+    }
+
+    function updateUndoRedoButtons() {
+      document.getElementById('undoBtn').disabled = historyIndex <= 0;
+      document.getElementById('redoBtn').disabled = historyIndex >= history.length - 1;
+    }
+
+    function undo() {
+      if (historyIndex > 0) {
+        historyIndex--;
+        gameState = JSON.parse(JSON.stringify(history[historyIndex]));
+        updateCharacter();
+        updateUndoRedoButtons();
+        playClickSound();
+      }
+    }
+
+    function redo() {
+      if (historyIndex < history.length - 1) {
+        historyIndex++;
+        gameState = JSON.parse(JSON.stringify(history[historyIndex]));
+        updateCharacter();
+        updateUndoRedoButtons();
+        playClickSound();
+      }
+    }
+
+    function updateCharacter() {
+      // Update all character layers
+      Object.keys(gameState).forEach(key => {
+        if (key !== 'stickers') {
+          const element = document.getElementById(key);
+          if (element) {
+            element.src = gameState[key] ? getAssetPath(key, gameState[key]) : '';
+          }
+        }
+      });
+      
+      // Update stickers
+      updateStickers();
+    }
+
+    function updateStickers() {
+      const container = document.getElementById('stickers-container');
+      container.innerHTML = '';
+      
+      gameState.stickers.forEach(sticker => {
+        const stickerElement = document.createElement('div');
+        stickerElement.className = 'sticker';
+        stickerElement.style.left = sticker.x + 'px';
+        stickerElement.style.top = sticker.y + 'px';
+        stickerElement.innerHTML = stickerEmojis[sticker.type] || '❓';
+        stickerElement.title = 'Double-click to remove';
+        
+        // Make draggable
+        let isDragging = false;
+        let startX, startY, initialX, initialY;
+        
+        stickerElement.addEventListener('mousedown', (e) => {
+          isDragging = true;
+          startX = e.clientX;
+          startY = e.clientY;
+          initialX = sticker.x;
+          initialY = sticker.y;
+          
+          const handleMouseMove = (e) => {
+            if (!isDragging) return;
+            
+            const deltaX = e.clientX - startX;
+            const deltaY = e.clientY - startY;
+            
+            const newX = Math.max(0, Math.min(168, initialX + deltaX));
+            const newY = Math.max(0, Math.min(268, initialY + deltaY));
+            
+            sticker.x = newX;
+            sticker.y = newY;
+            stickerElement.style.left = newX + 'px';
+            stickerElement.style.top = newY + 'px';
+          };
+          
+          const handleMouseUp = () => {
+            isDragging = false;
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+          };
+          
+          document.addEventListener('mousemove', handleMouseMove);
+          document.addEventListener('mouseup', handleMouseUp);
+          e.preventDefault();
+        });
+        
+        stickerElement.addEventListener('dblclick', () => {
+          saveState();
+          gameState.stickers = gameState.stickers.filter(s => s.id !== sticker.id);
+          updateStickers();
+          playClickSound();
+        });
+        
+        container.appendChild(stickerElement);
+      });
+    }
+
+    // Tab management
+    function showTab(tabName) {
+      // Update tab appearance
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      event.target.classList.add('active');
+      
+      const container = document.getElementById('tab-content-container');
+      
+      if (tabName === 'body') {
+        container.innerHTML = `
+          <div class="tab-content open">
+            <h3>Body & Outfits</h3>
+            <h4>Head Shape</h4>
+            <div class="option-grid">
+              ${assetConfig.head.map(head => `
+                <button class="option-button" onclick="setPart('head', '${head}')">
+                  <img src="${getAssetPath('head', head)}" alt="${head}" />
+                  <span>${head.slice(0, 8)}...</span>
+                </button>
+              `).join('')}
+            </div>
+            <h4>Body Front</h4>
+            <div class="option-grid">
+              ${assetConfig.body_front.slice(0, 6).map(body => `
+                <button class="option-button" onclick="setPart('body_front', '${body}')">
+                  <img src="${getAssetPath('body_front', body)}" alt="${body}" />
+                  <span>${body.slice(0, 8)}...</span>
+                </button>
+              `).join('')}
+            </div>
+            <h4>Body Back</h4>
+            <div class="option-grid">
+              ${assetConfig.body_back.slice(0, 6).map(body => `
+                <button class="option-button" onclick="setPart('body_back', '${body}')">
+                  <img src="${getAssetPath('body_back', body)}" alt="${body}" />
+                  <span>${body.slice(0, 8)}...</span>
+                </button>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      } else if (tabName === 'hair') {
+        container.innerHTML = `
+          <div class="tab-content open">
+            <h3>Hairstyles</h3>
+            <h4>Front Hair</h4>
+            <div class="option-grid">
+              ${assetConfig.hair_front.map(hair => `
+                <button class="option-button" onclick="setPart('hair_front', '${hair}')">
+                  <img src="${getAssetPath('hair_front', hair)}" alt="${hair}" />
+                  <span>${hair.slice(0, 8)}...</span>
+                </button>
+              `).join('')}
+            </div>
+            <h4>Back Hair</h4>
+            <div class="option-grid">
+              ${assetConfig.hair_back.slice(0, 6).map(hair => `
+                <button class="option-button" onclick="setPart('hair_back', '${hair}')">
+                  <img src="${getAssetPath('hair_back', hair)}" alt="${hair}" />
+                  <span>${hair.slice(0, 8)}...</span>
+                </button>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      } else if (tabName === 'face') {
+        container.innerHTML = `
+          <div class="tab-content open">
+            <h3>Face Features</h3>
+            <h4>Face Front</h4>
+            <div class="option-grid">
+              ${assetConfig.face_front.slice(0, 6).map(face => `
+                <button class="option-button" onclick="setPart('face_front', '${face}')">
+                  <img src="${getAssetPath('face_front', face)}" alt="${face}" />
+                  <span>${face.slice(0, 8)}...</span>
+                </button>
+              `).join('')}
+            </div>
+            <h4>Face Back</h4>
+            <div class="option-grid">
+              ${assetConfig.face_back.slice(0, 6).map(face => `
+                <button class="option-button" onclick="setPart('face_back', '${face}')">
+                  <img src="${getAssetPath('face_back', face)}" alt="${face}" />
+                  <span>${face.slice(0, 8)}...</span>
+                </button>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      } else if (tabName === 'eyes') {
+        container.innerHTML = `
+          <div class="tab-content open">
+            <h3>Eyes & Expression</h3>
+            <h4>Eye Shape</h4>
+            <div class="option-grid">
+              ${assetConfig.eye.slice(0, 6).map(eye => `
+                <button class="option-button" onclick="setPart('eye', '${eye}')">
+                  <img src="${getAssetPath('eye', eye)}" alt="${eye}" />
+                  <span>${eye.slice(0, 8)}...</span>
+                </button>
+              `).join('')}
+            </div>
+            <h4>Eye Color</h4>
+            <div class="option-grid">
+              ${assetConfig.eye_color.slice(0, 6).map(color => `
+                <button class="option-button" onclick="setPart('eye_color', '${color}')">
+                  <img src="${getAssetPath('eye_color', color)}" alt="${color}" />
+                  <span>${color.slice(0, 8)}...</span>
+                </button>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      } else if (tabName === 'accessories') {
+        container.innerHTML = `
+          <div class="tab-content open">
+            <h3>Accessories</h3>
+            <h4>Front Accessories</h4>
+            <div class="option-grid">
+              ${assetConfig.accessory_front.slice(0, 6).map(accessory => `
+                <button class="option-button" onclick="setPart('accessory_front', '${accessory}')">
+                  <img src="${getAssetPath('accessory_front', accessory)}" alt="${accessory}" />
+                  <span>${accessory.slice(0, 8)}...</span>
+                </button>
+              `).join('')}
+            </div>
+            <h4>Hair Accessories</h4>
+            <div class="option-grid">
+              ${assetConfig.hair_back_accessory.map(accessory => `
+                <button class="option-button" onclick="setPart('hair_back_accessory', '${accessory}')">
+                  <img src="${getAssetPath('hair_back_accessory', accessory)}" alt="${accessory}" />
+                  <span>${accessory.slice(0, 8)}...</span>
+                </button>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      } else if (tabName === 'stickers') {
+        container.innerHTML = `
+          <div class="tab-content open">
+            <h3>Drag & Drop Stickers</h3>
+            <p>Click to add, then drag on character!</p>
+            <div class="option-grid">
+              ${stickerTypes.map(type => `
+                <button class="option-button" onclick="addSticker('${type}')">
+                  <span style="font-size: 24px;">${stickerEmojis[type]}</span>
+                  <span>${type}</span>
+                </button>
+              `).join('')}
+            </div>
+            <button onclick="clearStickers()" style="width: 100%; margin-top: 10px;" class="control-buttons button">🧹 Clear All Stickers</button>
+          </div>
+        `;
+      } else if (tabName === 'bundles') {
+        container.innerHTML = `
+          <div class="tab-content open">
+            <h3>Style Bundles</h3>
+            <p>Apply complete themed outfits!</p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+              <button onclick="applyBundle('cute')" class="control-buttons button">
+                🎀 Cute Style<br><small>Sweet and adorable look</small>
+              </button>
+              <button onclick="applyBundle('elegant')" class="control-buttons button">
+                ✨ Elegant Style<br><small>Sophisticated and classy</small>
+              </button>
+              <button onclick="applyBundle('casual')" class="control-buttons button">
+                👕 Casual Style<br><small>Relaxed everyday look</small>
+              </button>
+            </div>
+          </div>
+        `;
+      }
+      
+      playClickSound();
+    }
+
+    // Character customization functions
+    function setPart(partId, value) {
+      saveState();
+      gameState[partId] = value;
+      document.getElementById(partId).src = value ? getAssetPath(partId, value) : '';
+      playClickSound();
+    }
+
+    function addSticker(type) {
+      saveState();
+      const newSticker = {
+        type: type,
+        x: Math.random() * 150,
+        y: Math.random() * 150,
+        id: 'sticker_' + (++stickerCounter)
+      };
+      gameState.stickers.push(newSticker);
+      updateStickers();
+      playClickSound();
+    }
+
+    function clearStickers() {
+      saveState();
+      gameState.stickers = [];
+      updateStickers();
+      playClickSound();
+    }
+
+    function randomizeCharacter() {
+      saveState();
+      
+      // Randomize each part
+      Object.keys(assetConfig).forEach(part => {
+        const options = assetConfig[part];
+        const randomOption = Math.random() < 0.8 ? options[Math.floor(Math.random() * options.length)] : '';
+        gameState[part] = randomOption;
+      });
+      
+      // Random stickers
+      const stickerCount = Math.floor(Math.random() * 4);
+      gameState.stickers = [];
+      
+      for (let i = 0; i < stickerCount; i++) {
+        gameState.stickers.push({
+          type: stickerTypes[Math.floor(Math.random() * stickerTypes.length)],
+          x: Math.random() * 150,
+          y: Math.random() * 150,
+          id: 'sticker_' + (++stickerCounter)
+        });
+      }
+      
+      updateCharacter();
+      playClickSound();
+    }
+
+    function resetCharacter() {
+      saveState();
+      Object.keys(gameState).forEach(key => {
+        if (key !== 'stickers') {
+          gameState[key] = '';
+          const element = document.getElementById(key);
+          if (element) element.src = '';
+        }
+      });
+      gameState.stickers = [];
+      updateStickers();
+      playClickSound();
+    }
+
+    function applyBundle(bundleName) {
+      const bundle = bundles[bundleName];
+      if (!bundle) return;
+      
+      saveState();
+      Object.keys(bundle).forEach(key => {
+        gameState[key] = bundle[key];
+      });
+      updateCharacter();
+      playClickSound();
+    }
+
+    function saveImage() {
+      const target = document.getElementById('capture-area');
+      if (typeof html2canvas !== 'undefined') {
+        html2canvas(target).then(canvas => {
+          const link = document.createElement('a');
+          link.download = 'chloes-closet-character.png';
+          link.href = canvas.toDataURL();
+          link.click();
+        });
+      } else {
+        alert('Screenshot feature requires html2canvas library to be loaded');
+      }
+      playClickSound();
+    }
+
+    function playClickSound() {
+      // Simple click sound using Web Audio API
+      try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = 800;
+        oscillator.type = 'square';
+        
+        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.1);
+      } catch (error) {
+        // Fallback: just log that sound was played
+        console.log('🔊 Click sound played');
+      }
+    }
+
+    // Initialize the game when page loads
+    window.addEventListener('load', init);
+  </script>
+</body>
+</html>
