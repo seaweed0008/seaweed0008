@@ -84,6 +84,186 @@
          <div id="footer">
          </div>
       </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ticci Toby Shimeji (All-in-One)</title>
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: #111;
+  }
+  #shimeji {
+    position: absolute;
+    width: 128px;
+    height: 128px;
+    user-select: none;
+    cursor: grab;
+    image-rendering: pixelated;
+  }
+  #shimeji.dragging {
+    cursor: grabbing;
+  }
+</style>
+</head>
+<body>
+
+<img id="shimeji" alt="Ticci Toby Shimeji" />
+
+<script>
+  const shimeji = document.getElementById('shimeji');
+
+  // Base64-encoded images for all animations (truncated data shown here, replace with your actual base64 strings)
+  const animations = {
+    idle: [
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIwAAACMCAYAAACoH... (idle1.png base64)",
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIwAAACMCAYAAACoH... (idle2.png base64)",
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIwAAACMCAYAAACoH... (idle3.png base64)"
+    ],
+    run: [
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIwAAACMCAYAAACoH... (run1.png base64)",
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIwAAACMCAYAAACoH... (run2.png base64)",
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIwAAACMCAYAAACoH... (run3.png base64)",
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIwAAACMCAYAAACoH... (run4.png base64)"
+    ],
+    jump: [
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIwAAACMCAYAAACoH... (jump1.png base64)",
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIwAAACMCAYAAACoH... (jump2.png base64)",
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIwAAACMCAYAAACoH... (jump3.png base64)"
+    ],
+    cling: [
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIwAAACMCAYAAACoH... (cling1.png base64)",
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIwAAACMCAYAAACoH... (cling2.png base64)"
+    ]
+  };
+
+  // For demonstration: I’ve replaced the base64 strings with placeholders since the real ones are very long.
+  // In the real code, each string must be the full base64 of your PNG images.
+
+  // Replace the above placeholders with your actual Base64 strings from your PNG files.
+  // You can convert PNGs to Base64 at https://www.base64-image.de/ or I can generate it for you if you upload images here.
+
+  // Current animation state
+  let currentAction = 'idle';
+  let frameIndex = 0;
+  const frameDelay = 300; // ms per frame
+  let frameTimer;
+
+  // Position and velocity
+  let posX = 100;
+  let posY = 100;
+  let velocityX = 0;
+  let velocityY = 0;
+  const gravity = 0.5;
+  const maxSpeed = 3;
+
+  // Movement boundaries
+  const width = 128;
+  const height = 128;
+
+  // Dragging
+  let dragging = false;
+  let dragOffsetX = 0;
+  let dragOffsetY = 0;
+
+  // Animate frames for current action
+  function animate() {
+    frameIndex++;
+    if(frameIndex >= animations[currentAction].length) {
+      frameIndex = 0;
+    }
+    shimeji.src = animations[currentAction][frameIndex];
+  }
+
+  frameTimer = setInterval(animate, frameDelay);
+
+  // Random movement AI: change velocity every 2 seconds
+  function randomMove() {
+    if (dragging) return; // pause movement while dragging
+
+    // Randomly pick a new action
+    const actions = ['idle', 'run', 'jump', 'cling'];
+    currentAction = actions[Math.floor(Math.random() * actions.length)];
+
+    if (currentAction === 'idle' || currentAction === 'cling') {
+      velocityX = 0;
+      velocityY = 0;
+    } else if (currentAction === 'run') {
+      velocityX = (Math.random() > 0.5 ? 1 : -1) * (1 + Math.random() * (maxSpeed - 1));
+      velocityY = 0;
+    } else if (currentAction === 'jump') {
+      velocityY = -10;
+      velocityX = (Math.random() > 0.5 ? 1 : -1) * (1 + Math.random() * (maxSpeed - 1));
+    }
+  }
+
+  randomMove();
+  setInterval(randomMove, 2000);
+
+  // Update position & apply gravity every 30ms
+  function updatePosition() {
+    if (dragging) return; // pause position update while dragging
+
+    velocityY += gravity;
+
+    posX += velocityX;
+    posY += velocityY;
+
+    // Screen boundaries and edge climbing
+    if (posX < 0) {
+      posX = 0;
+      velocityX *= -1;
+    }
+    if (posX > window.innerWidth - width) {
+      posX = window.innerWidth - width;
+      velocityX *= -1;
+    }
+    if (posY > window.innerHeight - height) {
+      posY = window.innerHeight - height;
+      velocityY = 0;
+    }
+    if (posY < 0) {
+      posY = 0;
+      velocityY = 0;
+    }
+
+    shimeji.style.left = posX + 'px';
+    shimeji.style.top = posY + 'px';
+  }
+
+  setInterval(updatePosition, 30);
+
+  // Drag handlers
+  shimeji.addEventListener('mousedown', (e) => {
+    dragging = true;
+    dragOffsetX = e.clientX - posX;
+    dragOffsetY = e.clientY - posY;
+    shimeji.classList.add('dragging');
+  });
+
+  window.addEventListener('mouseup', () => {
+    dragging = false;
+    shimeji.classList.remove('dragging');
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (!dragging) return;
+    posX = e.clientX - dragOffsetX;
+    posY = e.clientY - dragOffsetY;
+    shimeji.style.left = posX + 'px';
+    shimeji.style.top = posY + 'px';
+  });
+
+  // Initialize with first frame to avoid empty image
+  shimeji.src = animations.idle[0];
+</script>
+
+</body>
+</html>
+
    </body>
 <style>
 :root {
